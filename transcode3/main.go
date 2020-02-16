@@ -17,7 +17,6 @@ var (
 func main() {
 
 	flag.StringVar(&input, "input", "bbb.mp4", "input file")
-	flag.StringVar(&output, "output", "out.mkv", "out file")
 	flag.Parse()
 
 	var (
@@ -36,10 +35,15 @@ func main() {
 	}
 	defer ictx.Free()
 
-	if octx, err = gmf.NewOutputCtx(output); err != nil {
-		log.Fatalln(err)
+	// if octx, err = gmf.NewOutputCtx(output); err != nil {
+	// 	log.Fatalln(err)
+	// }
+	// defer octx.Free()
+
+	octx = gmf.NewCtx()
+	if octx == nil {
+		panic("ortx is null")
 	}
-	defer octx.Free()
 
 	iast, err = ictx.GetBestStream(gmf.AVMEDIA_TYPE_AUDIO)
 	if err != nil {
@@ -107,7 +111,7 @@ func main() {
 
 	fmt.Println(ovst)
 
-	octx.WriteHeader()
+	//octx.WriteHeader()
 
 	for {
 		if pkt, err = ictx.GetNextPacket(); err != nil {
@@ -166,30 +170,27 @@ func main() {
 				// if pkt.Dts() != gmf.AV_NOPTS_VALUE {
 				// 	pkt.SetDts(gmf.RescaleQRnd(pkt.Dts(), iast.TimeBase(), oast.TimeBase()))
 				// }
-
 				gmf.RescaleTs(packets[i], iast.TimeBase(), oast.TimeBase())
 				packets[i].SetStreamIndex(oast.Index())
-				octx.WritePacket(packets[i])
+				//octx.WritePacket(packets[i])
 				fmt.Println("audio", packets[i].Pts())
 				packets[i].Free()
-			}
-			fmt.Println("audio")
-		} else if ist.Type() == gmf.AVMEDIA_TYPE_VIDEO {
 
+			}
+		} else if ist.Type() == gmf.AVMEDIA_TYPE_VIDEO {
 			if pkt.Pts() != gmf.AV_NOPTS_VALUE {
 				pkt.SetPts(gmf.RescaleQRnd(pkt.Pts(), ivst.TimeBase(), ovst.TimeBase()))
 			}
-
 			if pkt.Dts() != gmf.AV_NOPTS_VALUE {
 				pkt.SetDts(gmf.RescaleQRnd(pkt.Dts(), ivst.TimeBase(), ovst.TimeBase()))
 			}
 			pkt.SetStreamIndex(ovst.Index())
 
-			octx.WritePacket(pkt)
+			//octx.WritePacket(pkt)
 			fmt.Println("video", pkt.Pts())
 		}
 		pkt.Free()
 	}
 
-	octx.WriteTrailer()
+	//octx.WriteTrailer()
 }
